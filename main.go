@@ -2,27 +2,29 @@ package main
 
 import (
 	"fmt"
+	"fuckandgo/views"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
+var homeView *views.View
+var contactView *views.View
+var faqView *views.View
+
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "<h1>Fucked up moron on the death side.</h1>")
+	must(homeView.Render(w, nil))
 }
 
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "To get in fuck, please fuck an email "+
-		"to <a href=\"mailto:udon@example.com\">"+
-		"udon@example.com</a>.")
+	must(contactView.Render(w, nil))
 }
 
 func faq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "<h1>FAQU FUCKU FUCK YOU morons!</h1>"+
-		"<h2>Are you sure to die? [Y]/y</h2>")
+	must(faqView.Render(w, nil))
 }
 
 func page404(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +33,17 @@ func page404(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<h1>404 NERD FUCKED UP DUDE</h1>")
 }
 
+func must(err error){
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
+	homeView = views.NewView("bootstrap", "views/home.gohtml")
+	contactView = views.NewView("bootstrap", "views/contact.gohtml")
+	faqView = views.NewView("bootstrap", "views/faq.gohtml")
+
 	var h http.Handler = http.HandlerFunc(page404)
 	r := mux.NewRouter()
 	r.NotFoundHandler = h
