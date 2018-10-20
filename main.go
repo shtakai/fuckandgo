@@ -53,10 +53,11 @@ func main() {
 	var h http.Handler = http.HandlerFunc(page404)
 	r := mux.NewRouter()
 	r.NotFoundHandler = h
-	r.HandleFunc("/", home)
-	r.HandleFunc("/contact", contact)
-	r.HandleFunc("/faq", faq)
+	r.HandleFunc("/", home).Methods("GET")
+	r.HandleFunc("/contact", contact).Methods("GET")
+	r.HandleFunc("/faq", faq).Methods("GET")
 
-	r.HandleFunc("/signup", usersC.New)
+	r.HandleFunc("/signup", usersC.New).Methods("GET")
+	r.HandleFunc("/signup", usersC.Create).Methods("POST")
 	http.ListenAndServe(":3000", r)
 }
