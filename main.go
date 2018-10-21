@@ -17,6 +17,7 @@ func page404(w http.ResponseWriter, r *http.Request) {
 func main() {
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers()
+	galleriesC := controllers.NewGalleries()
 
 	var h http.Handler = http.HandlerFunc(page404)
 	r := mux.NewRouter()
@@ -27,5 +28,7 @@ func main() {
 
 	r.HandleFunc("/signup", usersC.New).Methods("GET")
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
+
+	r.HandleFunc("/galleries", galleriesC.New).Methods("GET")
 	http.ListenAndServe(":3000", r)
 }
