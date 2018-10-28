@@ -3,9 +3,17 @@ package main
 import (
 	"fmt"
 	"fuckandgo/controllers"
+	"fuckandgo/models"
 	"net/http"
 
 	"github.com/gorilla/mux"
+)
+
+const (
+	host = "localhost"
+	port = 5432
+	user = "postgres"
+	dbname = "fuckandgo_dev"
 )
 
 func page404(w http.ResponseWriter, r *http.Request) {
@@ -15,8 +23,18 @@ func page404(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"dbname=%s sslmode=disable",
+		host, port, user, dbname)
+	us, err := models.NewUsersService(psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+	defer us.Close()
+	us.AutoMigrate()
+
 	staticC := controllers.NewStatic()
-	usersC := controllers.NewUsers()
+	usersC := controllers.NewUsers(us)
 
 	var h http.Handler = http.HandlerFunc(page404)
 	r := mux.NewRouter()

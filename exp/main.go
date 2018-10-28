@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
+	"fuckandgo/models"
 	_ "github.com/lib/pq"
 )
 
@@ -13,55 +13,93 @@ const (
 	dbname = "fuckandgo_dev"
 )
 
-type User struct {
-	gorm.Model
-	Name string
-	Email string `gorm:"not null;unique_index"`
-	Orders []Order
-}
-
-type Order struct {
-	gorm.Model
-	UserId uint
-	Amount int
-	Description string
-}
-
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"dbname=%s sslmode=disable",
 		host, port, user, dbname)
-	db, err := gorm.Open("postgres", psqlInfo)
-
+	us, err := models.NewUsersService(psqlInfo)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("connected to DB")
+	defer us.Close()
+	us.DestructiveReset()
 
-	defer db.Close()
-
-	db.LogMode(true)
-	db.AutoMigrate(&User{}, &Order{})
-
-	var user User
-	db.Preload("Orders").First(&user)
-	if db.Error != nil {
-		panic(db.Error)
+	user := models.User{
+		Name: "世志凡太",
+		Age: 98,
+		Email: "fuck-seshi-bxxta@test.com",
 	}
 
-	fmt.Println("email:", user.Email)
-	fmt.Println("name:", user.Name)
-	fmt.Println("orders:", user.Orders)
+	if err := us.Create(&user); err != nil {
+		panic(err)
+	}
 
+	user2 := models.User{
+		Name: "世志凡太2",
+		Age: 4,
+		Email: "kil-seshi-bxxta@test.com",
+	}
+
+	if err := us.Create(&user2); err != nil {
+		panic(err)
+	}
+
+	foundUser, err := us.ById(1)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(foundUser)
+
+	fmt.Println("==========")
+
+	foundUser, err = us.ByEmail("fuck-seshi-bxxta@test.com")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(foundUser)
+
+	user.Name = "沖雅也"
+	user.Email = "hikage-oyaji@nehande.matteru"
+
+	err = us.Update(&user)
+	if err != nil {
+		panic(err)
+	}
+
+	foundUser, err = us.ByEmail("hikage-oyaji@nehande.matteru")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(foundUser)
+
+	fmt.Println("==========")
+
+	foundUser, err = us.ByAge(user.Age)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(foundUser)
+
+	fmt.Println("==========")
+
+	users := us.InAgeRange(1, 100)
+    fmt.Println("users:", users)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Println(foundUser)
+
+	fmt.Println("==========")
+
+	err = us.Delete(foundUser.ID)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = us.ById(foundUser.ID)
+	if err != models.ErrNotFound {
+		panic("user is not deleted")
+	}
+	fmt.Println("User was fucked up RIPed")
 }
 
-//func createOrder(db *gorm.DB, user User, amount int, desc string) {
-//	db.Create(&Order{
-//		UserId: user.ID,
-//		Amount: amount,
-//		Description: desc,
-//	})
-//	if db.Error != nil {
-//		panic(db.Error)
-//	}
-//}
